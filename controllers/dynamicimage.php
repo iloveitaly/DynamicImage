@@ -1,13 +1,11 @@
 <?php defined('SYSPATH') or die('No direct script access.');
-/**
- *
- * $Id$
- *
- * @package    DynamicImage
- * @author     Polaris Digital
- * @copyright  (c) 2008 Polaris Digital
- * @license    GNU Public Licence v3
+
+/*
+ * @author		Michael Bianco
+ * 
+ * Original idea taken from http://code.google.com/p/kdynamicimage/ although mostly all of the code was rewritten
  */
+
 class DynamicImage_Controller extends Controller {
 	public function index() {
 		if($this->input->get('file') || $this->input->get('f')) {

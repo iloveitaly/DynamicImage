@@ -1,9 +1,4 @@
 <?php defined('SYSPATH') or die('No direct script access.');
-/**
- * @package  DynamicImage
- *
- * Controls settings for the DynamicImage library output
- */
 $config['compression'] = array						// Compression quality
 (
 	IMAGETYPE_PNG 	=> 0,									// 0 highest quality, 9 lowest quality (use 0 for almost all circumstances)
