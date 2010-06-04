@@ -38,6 +38,7 @@ class DynamicImage_Controller extends Controller {
 			}
 		} else {
 			Kohana::log('error', 'An image file in GIF, JPG or PNG format is required');
+			url::redirect('/');
 		}
 	}
 	
@@ -49,15 +50,20 @@ class DynamicImage_Controller extends Controller {
 		$cacheDirectory = Kohana::config('dynamicimage.cache_dir');
 		$fileExtension = strtolower(pathinfo($image_settings['filename'], PATHINFO_EXTENSION));
 		$cacheFile = $cacheDirectory.'/'.$hash.'.'.$fileExtension;
-
+		
 		if(!file_exists($cacheFile)) {
 			$image_settings += Kohana::config('dynamicimage');
 			$fileName = $image_settings['base_directory'].$image_settings['filename'];
-
+			
 			if(is_file($fileName)) {
-				self::process_image($image_settings, $fileName)->save($cacheFile);
+				try {
+					self::process_image($image_settings, $fileName)->save($cacheFile);
+				} catch (Exception $e) {
+					Kohana::log('error', 'Error reading / manipulating file: '.$fileName);
+					return FALSE;
+				}
 			} else {
-				Kohana::log('error', 'Invalid file specified');
+				Kohana::log('error', 'Invalid image file specified for dynamic image '.$fileName);
 				return FALSE;
 			}
 		}
