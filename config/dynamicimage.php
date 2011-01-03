@@ -10,5 +10,5 @@ $config['width']					= FALSE;			// Default output width
 $config['height']					= FALSE;			// Default output height
 $config['maintain_ratio']			= 'height';		// Ratio maintain, width or height
 
-$config['base_directory']			= DOCROOT;		// directory to append to all GET file vars
 $config['cache_dir']				= realpath('img');
+$config['base_directory']			= dirname($config['cache_dir']);		// directory to append to all GET file vars
