@@ -21,66 +21,91 @@ class DynamicImage_Controller extends Controller {
 				'filename' 				=> $get['file'],
 				'width'	  				=> isset($get['width']) ? $get['width'] : FALSE,
 				'height'   				=> isset($get['height']) ? $get['height'] : FALSE,
+				'filter'				=> isset($get['filter']) ? $get['filter'] : FALSE,
 				'maintain_ratio' 		=> isset($get['mr']) ? $get['mr'] : FALSE,
-				'format'				=> isset($get['format']) ? $get['format'] : FALSE,
-				'filter'				=> isset($get['filter']) ? $get['filter'] : FALSE
 			);
 			
-			$hash = md5(implode("", $image_settings));
-			$cacheDirectory = Kohana::config('dynamicimage.cache_dir');
-			$fileExtension = strtolower(pathinfo($get['file'], PATHINFO_EXTENSION));
-			$cacheFile = $cacheDirectory.'/'.$hash.'.'.$fileExtension;
+			$cacheFile = self::generate_cache($image_settings);
+			
+			if($cacheFile) {
+				$fileExtension = pathinfo($image_settings['filename'], PATHINFO_EXTENSION);
 
-			if(!file_exists($cacheFile)) {
-				$image_settings += Kohana::config('dynamicimage');
+				if($fileExtension == "jpg")
+					$fileExtension = "jpeg";
 
-				$filename = $image_settings['base_directory'].$image_settings['filename'];
-
-				if(is_file($filename)) {
-					$image = new Image($filename);
-
-					if($image_settings['maintain_ratio'] == 'height') {
-						$maintain_ratio = Image::HEIGHT;
-					} else if($image_settings['maintain_ratio'] == 'auto') {
-						$maintain_ratio = Image::AUTO;
-					} else {
-						$maintain_ratio = Image::WIDTH;
-					}
-
-					if(!$image_settings['width']) $image_settings['width'] = $image->width;
-					if(!$image_settings['height']) $image_settings['height'] = $image->height;
-					
-					// check for the crop filter
-					if($image_settings['filter'] == 'c') {
-						$ratio = max($image->width / $image->height, $image->height / $image->width);
-						$image->resize($image_settings['width'] * $ratio, $image_settings['height'] * $ratio);
-						$image->crop($image_settings['width'], $image_settings['height']);
-					} else {
-						$image->resize($image_settings['width'], $image_settings['height'], $maintain_ratio);
-					}
-					
-					$image->quality($image_settings['compression'][$image->type]);
-					$image->save($cacheFile);
-				} else {
-					return FALSE;
-				}
+				header("Cache-Control: max-age=604800, public"); // two weeks
+				header('Content-Type: image/'.$fileExtension);
+				readfile($cacheFile);
 			}
-			
-			if($fileExtension == "jpg")
-				$fileExtension = "jpeg";
-			
-			header("Cache-Control: max-age=604800, public"); // two weeks
-			header('Content-Type: image/'.$fileExtension);
-			readfile($cacheFile);
 		} else {
-			throw new Kohana_Exception('An image file in GIF, JPG or PNG format is required');
+			Kohana::log('error', 'An image file in GIF, JPG or PNG format is required');
+			url::redirect('/');
 		}
 	}
 	
-	protected function round_corners() {
-		// http://it.toolbox.com/blogs/opensource-programming/rounded-corners-on-images-22705
+	public static function generate_cache($image_settings) {
+		if(!empty($image_settings['src']))
+			$image_settings['filename'] = $image_settings['src'];
+		
+		$hash = md5(implode("", $image_settings));
+		$cacheDirectory = Kohana::config('dynamicimage.cache_dir');
+		$fileExtension = strtolower(pathinfo($image_settings['filename'], PATHINFO_EXTENSION));
+		$cacheFile = $cacheDirectory.'/'.$hash.'.'.$fileExtension;
+		
+		if(!file_exists($cacheFile)) {
+			$image_settings += Kohana::config('dynamicimage');
+			$fileName = $image_settings['base_directory'].$image_settings['filename'];
+			
+			if(is_file($fileName)) {
+				try {
+					self::process_image($image_settings, $fileName)->save($cacheFile);
+				} catch (Exception $e) {
+					Kohana::log('error', 'Error reading / manipulating file: '.$fileName);
+					return FALSE;
+				}
+			} else {
+				Kohana::log('error', 'Invalid image file specified for dynamic image '.$fileName);
+				return FALSE;
+			}
+		}
+		
+		return $cacheFile;
 	}
 	
+	public static function process_image($image_settings, $filePath) {
+		/*
+		$image_settings:
+			width, height
+			maintain_ratio
+		*/
+		
+		// rounded corners
+		// http://it.toolbox.com/blogs/opensource-programming/rounded-corners-on-images-22705
+		
+		$image = new Image($filePath);
+
+		if($image_settings['maintain_ratio'] == 'height') {
+			$maintain_ratio = Image::HEIGHT;
+		} else if($image_settings['maintain_ratio'] == 'auto') {
+			$maintain_ratio = Image::AUTO;
+		} else {
+			$maintain_ratio = Image::WIDTH;
+		}
+		
+		if(empty($image_settings['width'])) $image_settings['width'] = $image->width;
+		if(empty($image_settings['height'])) $image_settings['height'] = $image->height;
+		
+		// check for the crop filter
+		if($image_settings['filter'] == 'c') {
+			$ratio = max($image->width / $image->height, $image->height / $image->width);
+			$image->resize($image_settings['width'] * $ratio, $image_settings['height'] * $ratio);
+			$image->crop($image_settings['width'], $image_settings['height']);
+		} else {
+			$image->resize($image_settings['width'], $image_settings['height'], $maintain_ratio);
+		}
+		
+		return $image->quality($image_settings['compression'][$image->type]);
+	}
 	
 	public function clear_cache() {
 		$targetDir = Kohana::config('dynamicimage.cache_dir');
