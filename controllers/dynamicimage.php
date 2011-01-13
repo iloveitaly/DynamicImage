@@ -96,7 +96,7 @@ class DynamicImage_Controller extends Controller {
 		if(empty($image_settings['height'])) $image_settings['height'] = $image->height;
 		
 		// check for the crop filter
-		if($image_settings['filter'] == 'c') {
+		if(isset($image_settings['filter']) && $image_settings['filter'] == 'c') {
 			$ratio = max($image->width / $image->height, $image->height / $image->width);
 			$image->resize($image_settings['width'] * $ratio, $image_settings['height'] * $ratio);
 			$image->crop($image_settings['width'], $image_settings['height']);
