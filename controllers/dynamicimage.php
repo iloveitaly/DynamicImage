@@ -12,7 +12,7 @@ class DynamicImage_Controller extends Controller {
 			$get = $this->input->get();
 			
 			// alias some options
-			foreach(array('w' => 'width', 'h' => 'height', 'f' => 'file') as $key => $newKey) {
+			foreach(array('w' => 'width', 'h' => 'height', 'f' => 'file', 'fl' => 'filter') as $key => $newKey) {
 				if(!empty($get[$key])) $get[$newKey] = $get[$key];
 			}
 			
@@ -23,6 +23,7 @@ class DynamicImage_Controller extends Controller {
 				'height'   				=> isset($get['height']) ? $get['height'] : FALSE,
 				'maintain_ratio' 		=> isset($get['mr']) ? $get['mr'] : FALSE,
 				'format'				=> isset($get['format']) ? $get['format'] : FALSE,
+				'filter'				=> isset($get['filter']) ? $get['filter'] : FALSE
 			);
 			
 			$hash = md5(implode("", $image_settings));
@@ -48,9 +49,17 @@ class DynamicImage_Controller extends Controller {
 
 					if(!$image_settings['width']) $image_settings['width'] = $image->width;
 					if(!$image_settings['height']) $image_settings['height'] = $image->height;
-
-					$image->resize($image_settings['width'], $image_settings['height'], $maintain_ratio)->quality($image_settings['compression'][$image->type]);
 					
+					// check for the crop filter
+					if($image_settings['filter'] == 'c') {
+						$ratio = max($image->width / $image->height, $image->height / $image->width);
+						$image->resize($image_settings['width'] * $ratio, $image_settings['height'] * $ratio);
+						$image->crop($image_settings['width'], $image_settings['height']);
+					} else {
+						$image->resize($image_settings['width'], $image_settings['height'], $maintain_ratio);
+					}
+					
+					$image->quality($image_settings['compression'][$image->type]);
 					$image->save($cacheFile);
 				} else {
 					return FALSE;
@@ -66,6 +75,10 @@ class DynamicImage_Controller extends Controller {
 		} else {
 			throw new Kohana_Exception('An image file in GIF, JPG or PNG format is required');
 		}
+	}
+	
+	protected function round_corners() {
+		// http://it.toolbox.com/blogs/opensource-programming/rounded-corners-on-images-22705
 	}
 	
 	
