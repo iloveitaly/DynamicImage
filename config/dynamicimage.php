@@ -12,3 +12,4 @@ $config['maintain_ratio']			= 'height';		// Ratio maintain, width or height
 
 $config['cache_dir']				= realpath('img');
 $config['base_directory']			= dirname($config['cache_dir']);		// directory to append to all GET file vars
+$config['aliases'] = array('w' => 'width', 'h' => 'height', 'f' => 'file', 'fl' => 'filter');
