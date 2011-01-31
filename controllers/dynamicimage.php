@@ -12,7 +12,7 @@ class DynamicImage_Controller extends Controller {
 			$get = $this->input->get();
 			
 			// alias some options
-			foreach(array('w' => 'width', 'h' => 'height', 'f' => 'file', 'fl' => 'filter') as $key => $newKey) {
+			foreach(Kohana::config('dynamicimage.aliases') as $key => $newKey) {
 				if(!empty($get[$key])) $get[$newKey] = $get[$key];
 			}
 			
@@ -38,7 +38,7 @@ class DynamicImage_Controller extends Controller {
 				readfile($cacheFile);
 			}
 		} else {
-			Kohana::log('error', 'An image file in GIF, JPG or PNG format is required');
+			Kohana::log('error', 'An image file in GIF, JPG or PNG format is required'.print_r($this->input->get(), true));
 			url::redirect('/');
 		}
 	}
