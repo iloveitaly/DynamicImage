@@ -60,11 +60,11 @@ class DynamicImage_Controller extends Controller {
 				try {
 					self::process_image($image_settings, $fileName)->save($cacheFile);
 				} catch (Exception $e) {
-					Kohana::log('error', 'Error reading / manipulating file: '.$fileName);
+					Kohana::VERSION == 2.4 ? Kohana_log::add('error', 'Error reading / manipulating file: '.$fileName) : Kohana::log('error', 'Error reading / manipulating file: '.$fileName);
 					return FALSE;
 				}
 			} else {
-				Kohana::log('error', 'Invalid image file specified for dynamic image '.$fileName);
+				Kohana::VERSION == 2.4 ? Kohana_log::add('error', 'Invalid image file specified for dynamic image'.$fileName) : Kohana::log('error', 'Invalid image file specified for dynamic image '.$fileName);
 				return FALSE;
 			}
 		}
@@ -113,7 +113,7 @@ class DynamicImage_Controller extends Controller {
 
 		foreach($files as $file) {
 			if(!unlink($targetDir.'/'.$file)) {
-				Kohana::log('error', 'Error deleting file '.$targetDir.$file);
+				Kohana::VERSION == 2.4 ? Kohana_log::add('error', 'Error deleting file '.$targetDir.$file) : Kohana::log('error', 'Error deleting file '.$targetDir.$file);
 			}
 		}
 	}
