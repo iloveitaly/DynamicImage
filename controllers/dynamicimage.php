@@ -54,7 +54,7 @@ class DynamicImage_Controller extends Controller {
 		
 		if(!file_exists($cacheFile)) {
 			$image_settings += Kohana::config('dynamicimage');
-			$fileName = $image_settings['base_directory'].$image_settings['filename'];
+			$fileName = startsWith($image_settings['base_directory'], $image_settings['filename']) ? $image_settings['filename'] : $image_settings['base_directory'].$image_settings['filename'];
 			
 			if(is_file($fileName)) {
 				try {
